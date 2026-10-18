@@ -2,6 +2,7 @@ package pl.piatek.catering.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import pl.piatek.catering.dto.order.CreateOrderRequest;
 import pl.piatek.catering.dto.order.FulfillmentType;
@@ -10,6 +11,8 @@ import pl.piatek.catering.dto.order.OrderBoxRequest;
 import pl.piatek.catering.dto.order.OrderSource;
 import pl.piatek.catering.dto.order.OrderStatus;
 import pl.piatek.catering.dto.order.PaymentStatus;
+import pl.piatek.catering.dto.sms.OrderNotificationEvent;
+import pl.piatek.catering.dto.sms.SmsType;
 import pl.piatek.catering.entity.MenuItem;
 import pl.piatek.catering.entity.Order;
 import pl.piatek.catering.entity.OrderBox;
@@ -28,13 +31,18 @@ public class OrderService {
 
     private final OrderRepository repository;
     private final BoxPricingService pricingService;
+    private final ApplicationEventPublisher events;
 
-    /** Zamówienie złożone przez klienta przez stronę. */
+    /**
+     * Zamówienie złożone przez klienta przez stronę.
+     */
     public Order createFromWeb(CreateOrderRequest req) {
         return create(req, OrderSource.WEB, OrderStatus.NEW);
     }
 
-    /** Zamówienie wpisane ręcznie przez właściciela (telefon, osobiście); od razu potwierdzone. */
+    /**
+     * Zamówienie wpisane ręcznie przez właściciela (telefon, osobiście); od razu potwierdzone.
+     */
     public Order createByAdmin(CreateOrderRequest req) {
         return create(req, OrderSource.ADMIN, OrderStatus.CONFIRMED);
     }
@@ -67,14 +75,24 @@ public class OrderService {
         }
 
         order.setStatus(target);
-        // tutaj później podepniemy wysyłkę SMS o zmianie statusu
+        SmsType smsType = SmsType.forStatus(target);
+        if (smsType != null) {
+            publish(order, smsType);
+        }
         return OrderAdminResponse.from(order);
     }
 
     public OrderAdminResponse changePayment(Long id, PaymentStatus paymentStatus) {
         Order order = get(id);
+        boolean newlyPaid = paymentStatus == PaymentStatus.PAID
+                && order.getPaymentStatus() != PaymentStatus.PAID;
+
         order.setPaymentStatus(paymentStatus);
         order.setPaidAt(paymentStatus == PaymentStatus.PAID ? LocalDateTime.now() : null);
+
+        if (newlyPaid) {
+            publish(order, SmsType.PAYMENT_RECEIVED);
+        }
         return OrderAdminResponse.from(order);
     }
 
@@ -133,6 +151,14 @@ public class OrderService {
 
         order.setTotalPrice(totalPrice);
         order.setTotalCost(totalCost);
-        return repository.save(order);
+        Order saved = repository.save(order);
+        publish(saved, initialStatus == OrderStatus.NEW ? SmsType.ORDER_RECEIVED : SmsType.ORDER_CONFIRMED);
+        return saved;
+    }
+
+    private void publish(Order order, SmsType type) {
+        events.publishEvent(new OrderNotificationEvent(
+                order.getId(), order.getCustomerPhone(), type,
+                order.getTotalPrice(), order.getFulfillmentAt()));
     }
 }

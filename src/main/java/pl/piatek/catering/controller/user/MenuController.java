@@ -1,4 +1,4 @@
-package pl.piatek.catering.controller;
+package pl.piatek.catering.controller.user;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;

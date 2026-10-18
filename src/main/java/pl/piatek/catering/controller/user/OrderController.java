@@ -1,4 +1,4 @@
-package pl.piatek.catering.controller;
+package pl.piatek.catering.controller.user;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +11,6 @@ import org.springframework.web.bind.annotation.RestController;
 import pl.piatek.catering.dto.order.CreateOrderRequest;
 import pl.piatek.catering.dto.order.OrderConfirmationResponse;
 import pl.piatek.catering.service.OrderService;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/orders")

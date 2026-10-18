@@ -29,6 +29,14 @@ box:
   min-items: 5
   max-items: 6
 
+sms:
+  provider: log
+  payment-reminder-after-hours: 24
+
+business:
+  name: ${BUSINESS_NAME:Catering}
+  payment-info: ${PAYMENT_INFO:BLIK na telefon lub przelew, dane przekaze wlasciciel}
+
 logging:
   level:
     org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: TRACE

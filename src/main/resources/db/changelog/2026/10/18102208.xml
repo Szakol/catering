@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="004-sms-log" author="kacper">
+        <createTable tableName="sms_log">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="order_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_sms_log_order"
+                             references="customer_order(id)"
+                             deleteCascade="true"/>
+            </column>
+            <column name="phone" type="VARCHAR(30)"><constraints nullable="false"/></column>
+            <column name="type" type="VARCHAR(40)"><constraints nullable="false"/></column>
+            <column name="message" type="VARCHAR(500)"><constraints nullable="false"/></column>
+            <column name="status" type="VARCHAR(20)"><constraints nullable="false"/></column>
+            <column name="error" type="VARCHAR(500)"/>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex tableName="sms_log" indexName="idx_sms_log_order_type">
+            <column name="order_id"/>
+            <column name="type"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

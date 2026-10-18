@@ -1,4 +1,4 @@
-package pl.piatek.catering.controller;
+package pl.piatek.catering.controller.admin;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
