@@ -1,3 +1,34 @@
 spring:
-  application:
-    name: catering
+  datasource:
+    url: jdbc:postgresql://localhost:5432/catering
+    username: postgres
+    password: zaq1@WSX
+    driver-class-name: org.postgresql.Driver
+
+  security:
+    user:
+      name: admin
+      password: admin
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        default_batch_fetch_size: 50
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.xml
+    drop-first: false
+
+box:
+  min-items: 5
+  max-items: 6
+
+logging:
+  level:
+    org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping: TRACE

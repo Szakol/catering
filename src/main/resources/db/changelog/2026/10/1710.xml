@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="001-product" author="kacper">
+        <createTable tableName="product">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(150)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="unit" type="VARCHAR(20)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="cost_per_unit" type="NUMERIC(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <sql>ALTER TABLE product ADD CONSTRAINT chk_product_cost CHECK (cost_per_unit >= 0)</sql>
+    </changeSet>
+
+    <changeSet id="001-menu-item" author="kacper">
+        <createTable tableName="menu_item">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="name" type="VARCHAR(150)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="VARCHAR(1000)"/>
+            <column name="price" type="NUMERIC(10,2)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="active" type="BOOLEAN" defaultValueBoolean="true">
+                <constraints nullable="false"/>
+            </column>
+            <column name="sort_order" type="INT" defaultValueNumeric="0">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <sql>ALTER TABLE menu_item ADD CONSTRAINT chk_menu_item_price CHECK (price >= 0)</sql>
+    </changeSet>
+
+    <changeSet id="001-menu-item-ingredient" author="kacper">
+        <createTable tableName="menu_item_ingredient">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="menu_item_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_ingredient_menu_item"
+                             references="menu_item(id)"
+                             deleteCascade="true"/>
+            </column>
+            <column name="product_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_ingredient_product"
+                             references="product(id)"/>
+            </column>
+            <column name="quantity" type="NUMERIC(10,3)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <sql>ALTER TABLE menu_item_ingredient ADD CONSTRAINT chk_ingredient_quantity CHECK (quantity > 0)</sql>
+        <addUniqueConstraint tableName="menu_item_ingredient"
+                             columnNames="menu_item_id, product_id"
+                             constraintName="uq_ingredient_item_product"/>
+        <createIndex tableName="menu_item_ingredient" indexName="idx_ingredient_product">
+            <column name="product_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>

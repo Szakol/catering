@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="003-customer-order" author="kacper">
+        <createTable tableName="customer_order">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="customer_name" type="VARCHAR(150)"><constraints nullable="false"/></column>
+            <column name="customer_phone" type="VARCHAR(30)"><constraints nullable="false"/></column>
+            <column name="customer_email" type="VARCHAR(200)"/>
+            <column name="fulfillment_type" type="VARCHAR(20)"><constraints nullable="false"/></column>
+            <column name="delivery_address" type="VARCHAR(300)"/>
+            <column name="fulfillment_at" type="TIMESTAMP"><constraints nullable="false"/></column>
+            <column name="notes" type="VARCHAR(1000)"/>
+            <column name="status" type="VARCHAR(30)"><constraints nullable="false"/></column>
+            <column name="payment_method" type="VARCHAR(20)"><constraints nullable="false"/></column>
+            <column name="payment_status" type="VARCHAR(20)"><constraints nullable="false"/></column>
+            <column name="paid_at" type="TIMESTAMP"/>
+            <column name="source" type="VARCHAR(20)"><constraints nullable="false"/></column>
+            <column name="total_price" type="NUMERIC(12,2)"><constraints nullable="false"/></column>
+            <column name="total_cost" type="NUMERIC(12,2)"><constraints nullable="false"/></column>
+            <column name="created_at" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createIndex tableName="customer_order" indexName="idx_order_status">
+            <column name="status"/>
+        </createIndex>
+        <createIndex tableName="customer_order" indexName="idx_order_fulfillment_at">
+            <column name="fulfillment_at"/>
+        </createIndex>
+        <createIndex tableName="customer_order" indexName="idx_order_created_at">
+            <column name="created_at"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="003-order-box" author="kacper">
+        <createTable tableName="order_box">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="order_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_order_box_order"
+                             references="customer_order(id)"
+                             deleteCascade="true"/>
+            </column>
+            <column name="position" type="INT"><constraints nullable="false"/></column>
+            <column name="quantity" type="INT"><constraints nullable="false"/></column>
+        </createTable>
+        <sql>ALTER TABLE order_box ADD CONSTRAINT chk_order_box_quantity CHECK (quantity > 0)</sql>
+        <createIndex tableName="order_box" indexName="idx_order_box_order">
+            <column name="order_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="003-order-box-item" author="kacper">
+        <createTable tableName="order_box_item">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="order_box_id" type="BIGINT">
+                <constraints nullable="false"
+                             foreignKeyName="fk_order_item_box"
+                             references="order_box(id)"
+                             deleteCascade="true"/>
+            </column>
+            <column name="menu_item_id" type="BIGINT"/>
+            <column name="name" type="VARCHAR(150)"><constraints nullable="false"/></column>
+            <column name="price" type="NUMERIC(10,2)"><constraints nullable="false"/></column>
+            <column name="cost" type="NUMERIC(10,2)"><constraints nullable="false"/></column>
+        </createTable>
+        <!-- usunięcie potrawy z menu nie kasuje historii zamówień -->
+        <addForeignKeyConstraint baseTableName="order_box_item" baseColumnNames="menu_item_id"
+                                 constraintName="fk_order_item_menu_item"
+                                 referencedTableName="menu_item" referencedColumnNames="id"
+                                 onDelete="SET NULL"/>
+        <createIndex tableName="order_box_item" indexName="idx_order_item_box">
+            <column name="order_box_id"/>
+        </createIndex>
+    </changeSet>
+</databaseChangeLog>
