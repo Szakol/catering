@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
+import pl.piatek.catering.config.OrderTimeProperties;
 import pl.piatek.catering.dto.order.CreateOrderRequest;
 import pl.piatek.catering.dto.order.FulfillmentType;
 import pl.piatek.catering.dto.order.OrderAdminResponse;
@@ -32,13 +33,18 @@ public class OrderService {
     private final OrderRepository repository;
     private final BoxPricingService pricingService;
     private final ApplicationEventPublisher events;
+    private final OrderTimeProperties timeRules;
 
     /** Zamówienie złożone przez klienta przez stronę. */
     public Order createFromWeb(CreateOrderRequest req) {
+        timeRules.validate(req.fulfillmentAt());
         return create(req, OrderSource.WEB, OrderStatus.NEW);
     }
 
-    /** Zamówienie wpisane ręcznie przez właściciela (telefon, osobiście); od razu potwierdzone. */
+    /**
+     * Zamówienie wpisane ręcznie przez właściciela (telefon, osobiście); od razu potwierdzone.
+     * Ograniczenia terminu (wyprzedzenie, godziny) dotyczą tylko zamówień ze strony.
+     */
     public Order createByAdmin(CreateOrderRequest req) {
         return create(req, OrderSource.ADMIN, OrderStatus.CONFIRMED);
     }
