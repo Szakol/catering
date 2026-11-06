@@ -1,0 +1,12 @@
+# Profil produkcyjny: SPRING_PROFILES_ACTIVE=prod
+# Wymagane zmienne srodowiskowe: DB_URL, DB_USERNAME, DB_PASSWORD, ADMIN_PASSWORD
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+server:
+  error:
+    include-message: never
+    include-stacktrace: never
