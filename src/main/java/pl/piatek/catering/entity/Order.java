@@ -37,6 +37,10 @@ public class Order {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    /** Publiczny, losowy numer zamówienia (bez myślnika). Tylko on jest pokazywany klientowi. */
+    @Column(name = "public_code", nullable = false, updatable = false, unique = true, length = 12)
+    private String publicCode;
+
     @Column(name = "customer_name", nullable = false, length = 150)
     private String customerName;
 

@@ -38,6 +38,11 @@ public class AdminOrderController {
         return service.findById(id);
     }
 
+    @GetMapping("/by-code/{code}")
+    public OrderAdminResponse getByCode(@PathVariable String code) {
+        return service.findByCode(code);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public OrderAdminResponse create(@Valid @RequestBody CreateOrderRequest req) {

@@ -8,12 +8,17 @@ import pl.piatek.catering.entity.Order;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
     List<Order> findAllByOrderByCreatedAtDesc();
 
     List<Order> findByStatusOrderByCreatedAtDesc(OrderStatus status);
+
+    boolean existsByPublicCode(String publicCode);
+
+    Optional<Order> findByPublicCode(String publicCode);
 
     List<Order> findByPaymentStatusAndStatusInAndCreatedAtBeforeAndFulfillmentAtAfter(
             PaymentStatus paymentStatus, Collection<OrderStatus> statuses,

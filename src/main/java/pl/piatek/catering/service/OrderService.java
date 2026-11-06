@@ -33,16 +33,12 @@ public class OrderService {
     private final BoxPricingService pricingService;
     private final ApplicationEventPublisher events;
 
-    /**
-     * Zamówienie złożone przez klienta przez stronę.
-     */
+    /** Zamówienie złożone przez klienta przez stronę. */
     public Order createFromWeb(CreateOrderRequest req) {
         return create(req, OrderSource.WEB, OrderStatus.NEW);
     }
 
-    /**
-     * Zamówienie wpisane ręcznie przez właściciela (telefon, osobiście); od razu potwierdzone.
-     */
+    /** Zamówienie wpisane ręcznie przez właściciela (telefon, osobiście); od razu potwierdzone. */
     public Order createByAdmin(CreateOrderRequest req) {
         return create(req, OrderSource.ADMIN, OrderStatus.CONFIRMED);
     }
@@ -60,6 +56,15 @@ public class OrderService {
         return OrderAdminResponse.from(get(id));
     }
 
+    /** Wyszukiwanie po numerze z tytułu przelewu (wielkość liter i myślnik nie mają znaczenia). */
+    @Transactional()
+    public OrderAdminResponse findByCode(String code) {
+        String normalized = OrderCodes.normalize(code);
+        return repository.findByPublicCode(normalized)
+                .map(OrderAdminResponse::from)
+                .orElseThrow(() -> new NotFoundException("Zamówienie o numerze " + code + " nie istnieje"));
+    }
+
     public OrderAdminResponse changeStatus(Long id, OrderStatus target) {
         Order order = get(id);
 
@@ -75,6 +80,7 @@ public class OrderService {
         }
 
         order.setStatus(target);
+
         SmsType smsType = SmsType.forStatus(target);
         if (smsType != null) {
             publish(order, smsType);
@@ -103,6 +109,24 @@ public class OrderService {
                 .orElseThrow(() -> new NotFoundException("Zamówienie " + id + " nie istnieje"));
     }
 
+    private void publish(Order order, SmsType type) {
+        events.publishEvent(new OrderNotificationEvent(
+                order.getId(), OrderCodes.format(order.getPublicCode()),
+                order.getCustomerPhone(), type,
+                order.getTotalPrice(), order.getFulfillmentAt()));
+    }
+
+    /** Losuje numer, aż trafi na wolny. Unikalność dodatkowo pilnuje ograniczenie w bazie. */
+    private String generateUniqueCode() {
+        for (int attempt = 0; attempt < 10; attempt++) {
+            String code = OrderCodes.generate();
+            if (!repository.existsByPublicCode(code)) {
+                return code;
+            }
+        }
+        throw new IllegalStateException("Nie udało się wygenerować unikalnego numeru zamówienia");
+    }
+
     private Order create(CreateOrderRequest req, OrderSource source, OrderStatus initialStatus) {
         boolean delivery = req.fulfillmentType() == FulfillmentType.DELIVERY;
         if (delivery && (req.deliveryAddress() == null || req.deliveryAddress().isBlank())) {
@@ -110,6 +134,7 @@ public class OrderService {
         }
 
         Order order = new Order();
+        order.setPublicCode(generateUniqueCode());
         order.setCustomerName(req.customerName().trim());
         order.setCustomerPhone(req.customerPhone().trim());
         order.setCustomerEmail(req.customerEmail() == null || req.customerEmail().isBlank()
@@ -151,14 +176,9 @@ public class OrderService {
 
         order.setTotalPrice(totalPrice);
         order.setTotalCost(totalCost);
+
         Order saved = repository.save(order);
         publish(saved, initialStatus == OrderStatus.NEW ? SmsType.ORDER_RECEIVED : SmsType.ORDER_CONFIRMED);
         return saved;
-    }
-
-    private void publish(Order order, SmsType type) {
-        events.publishEvent(new OrderNotificationEvent(
-                order.getId(), order.getCustomerPhone(), type,
-                order.getTotalPrice(), order.getFulfillmentAt()));
     }
 }

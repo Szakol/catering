@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="005-order-public-code" author="kacper">
+        <addColumn tableName="customer_order">
+            <column name="public_code" type="VARCHAR(12)"/>
+        </addColumn>
+
+        <!-- istniejące zamówienia (testowe) dostają losowe kody -->
+        <sql>UPDATE customer_order SET public_code = upper(substr(md5(random()::text || id::text), 1, 8))</sql>
+
+        <addNotNullConstraint tableName="customer_order" columnName="public_code" columnDataType="VARCHAR(12)"/>
+        <addUniqueConstraint tableName="customer_order" columnNames="public_code"
+                             constraintName="uq_order_public_code"/>
+    </changeSet>
+</databaseChangeLog>

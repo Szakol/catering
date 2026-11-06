@@ -1,6 +1,7 @@
 package pl.piatek.catering.dto.order;
 
 import pl.piatek.catering.entity.Order;
+import pl.piatek.catering.service.OrderCodes;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -8,6 +9,7 @@ import java.util.List;
 
 public record OrderAdminResponse(
         Long id,
+        String orderCode,
         OrderStatus status,
         PaymentStatus paymentStatus,
         PaymentMethod paymentMethod,
@@ -28,7 +30,8 @@ public record OrderAdminResponse(
 
     public static OrderAdminResponse from(Order o) {
         return new OrderAdminResponse(
-                o.getId(), o.getStatus(), o.getPaymentStatus(), o.getPaymentMethod(), o.getPaidAt(),
+                o.getId(), OrderCodes.format(o.getPublicCode()),
+                o.getStatus(), o.getPaymentStatus(), o.getPaymentMethod(), o.getPaidAt(),
                 o.getSource(), o.getCreatedAt(),
                 o.getCustomerName(), o.getCustomerPhone(), o.getCustomerEmail(),
                 o.getFulfillmentType(), o.getDeliveryAddress(), o.getFulfillmentAt(), o.getNotes(),

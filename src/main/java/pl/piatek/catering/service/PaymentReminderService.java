@@ -45,7 +45,8 @@ public class PaymentReminderService {
                 continue;
             }
             OrderNotificationEvent event = new OrderNotificationEvent(
-                    order.getId(), order.getCustomerPhone(), SmsType.PAYMENT_REMINDER,
+                    order.getId(), OrderCodes.format(order.getPublicCode()),
+                    order.getCustomerPhone(), SmsType.PAYMENT_REMINDER,
                     order.getTotalPrice(), order.getFulfillmentAt());
             smsService.send(order.getId(), order.getCustomerPhone(),
                     SmsType.PAYMENT_REMINDER, templates.render(event));
